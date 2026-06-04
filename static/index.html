@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FUD Virtual Assistant</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #f0f2f5;
+      --header: #006400;
+      --chat-bg: #ffffff;
+      --input-bg: #ffffff;
+      --bot-bubble: #f1f1f1;
+      --bot-text: #222;
+      --user-bubble: #006400;
+      --user-text: #ffffff;
+      --placeholder: #888;
+      --shadow: rgba(0,0,0,0.1);
+      --suggestion-bg: #e8f5e9;
+      --suggestion-border: #006400;
+      --suggestion-text: #006400;
+    }
+
+    .dark {
+      --bg: #1a1a2e;
+      --header: #004d00;
+      --chat-bg: #16213e;
+      --input-bg: #0f3460;
+      --bot-bubble: #0f3460;
+      --bot-text: #e0e0e0;
+      --user-bubble: #006400;
+      --user-text: #ffffff;
+      --placeholder: #aaa;
+      --shadow: rgba(0,0,0,0.3);
+      --suggestion-bg: #0f3460;
+      --suggestion-border: #00a000;
+      --suggestion-text: #90ee90;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100vh;
+      transition: background 0.3s;
+    }
+
+    header {
+      width: 100%;
+      background: var(--header);
+      color: white;
+      padding: 14px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 { font-size: 1.1rem; }
+    header p  { font-size: 0.8rem; opacity: 0.85; }
+
+    #dark-toggle {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+
+    #dark-toggle:hover { background: rgba(255,255,255,0.3); }
+
+    .container {
+      width: 100%;
+      max-width: 800px;
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 60px);
+      padding: 12px;
+      gap: 10px;
+    }
+
+    #chat-box {
+      flex: 1;
+      background: var(--chat-bg);
+      border-radius: 12px;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 1px 4px var(--shadow);
+      transition: background 0.3s;
+    }
+
+    .message {
+      max-width: 78%;
+      padding: 10px 14px;
+      border-radius: 16px;
+      font-size: 0.92rem;
+      line-height: 1.6;
+      word-wrap: break-word;
+    }
+
+    .message.user {
+      background: var(--user-bubble);
+      color: var(--user-text);
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+    }
+
+    .message.bot {
+      background: var(--bot-bubble);
+      color: var(--bot-text);
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    /* Typing animation */
+    .typing-indicator {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 12px 16px;
+      background: var(--bot-bubble);
+      border-radius: 16px;
+      border-bottom-left-radius: 4px;
+      align-self: flex-start;
+      width: fit-content;
+    }
+
+    .typing-indicator span {
+      width: 8px;
+      height: 8px;
+      background: #006400;
+      border-radius: 50%;
+      animation: bounce 1.2s infinite;
+    }
+
+    .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-8px); }
+    }
+
+    /* Suggested questions */
+    .suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 4px 0;
+    }
+
+    .suggestion-btn {
+      background: var(--suggestion-bg);
+      color: var(--suggestion-text);
+      border: 1px solid var(--suggestion-border);
+      padding: 6px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      transition: all 0.2s;
+    }
+
+    #new-chat-btn {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+#new-chat-btn:hover { background: rgba(255,255,255,0.3); }
+
+    .suggestion-btn:hover {
+      background: #006400;
+      color: white;
+    }
+
+    .input-area {
+      display: flex;
+      gap: 10px;
+      background: var(--input-bg);
+      border-radius: 12px;
+      padding: 10px 14px;
+      box-shadow: 0 1px 4px var(--shadow);
+      transition: background 0.3s;
+    }
+
+    #question-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-size: 0.95rem;
+      background: transparent;
+      color: var(--bot-text);
+    }
+
+    #question-input::placeholder { color: var(--placeholder); }
+
+    #send-btn {
+      background: #006400;
+      color: white;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+    }
+
+    #send-btn:hover { background: #005000; }
+    #send-btn:disabled { background: #aaa; cursor: not-allowed; }
+
+    /* Mobile */
+    @media (max-width: 600px) {
+      header h1 { font-size: 1rem; }
+      .message { max-width: 90%; font-size: 0.88rem; }
+      #send-btn { padding: 8px 14px; font-size: 0.85rem; }
+      .suggestion-btn { font-size: 0.78rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div>
+      <h1>🎓 FUD Virtual Assistant</h1>
+      <p>Federal University Dutse — Institutional Services</p>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="new-chat-btn" onclick="newChat()">🔄 New Chat</button>
+      <button id="dark-toggle" onclick="toggleDark()">🌙 Dark Mode</button>
+    </div>
+</header>
+
+  <div class="container">
+    <div id="chat-box">
+      <div class="message bot">
+        👋 Hello! I am <strong>FUDA</strong>, the FUD Virtual Assistant. Ask me anything about Federal University Dutse — admissions, courses, regulations, and more!
+      </div>
+
+      <!-- Suggested questions -->
+      <div class="suggestions">
+        <button class="suggestion-btn" onclick="askSuggestion(this)">📋 Admission requirements</button>
+        <button class="suggestion-btn" onclick="askSuggestion(this)">📚 Available courses</button>
+        <button class="suggestion-btn" onclick="askSuggestion(this)">📅 Academic calendar</button>
+        <button class="suggestion-btn" onclick="askSuggestion(this)">💰 School fees</button>
+        <button class="suggestion-btn" onclick="askSuggestion(this)">📝 Exam rules</button>
+        <button class="suggestion-btn" onclick="askSuggestion(this)">🏠 Hostel information</button>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <input
+        type="text"
+        id="question-input"
+        placeholder="Ask a question about FUD..."
+        onkeydown="if(event.key === 'Enter') sendMessage()"
+      />
+      <button id="send-btn" onclick="sendMessage()">Send ➤</button>
+    </div>
+  </div>
+
+  <script>
+    // Chat history
+    let chatHistory = [];
+
+    // Dark mode
+    function toggleDark() {
+      document.body.classList.toggle("dark");
+      const btn = document.getElementById("dark-toggle");
+      btn.textContent = document.body.classList.contains("dark")
+        ? "☀️ Light Mode"
+        : "🌙 Dark Mode";
+      localStorage.setItem("darkMode", document.body.classList.contains("dark"));
+    }
+
+    // Load dark mode preference
+    if (localStorage.getItem("darkMode") === "true") {
+      document.body.classList.add("dark");
+      document.getElementById("dark-toggle").textContent = "☀️ Light Mode";
+    }
+
+    // Suggested question click
+    function askSuggestion(btn) {
+      const question = btn.textContent.replace(/^[^\w]+/, "").trim();
+      document.getElementById("question-input").value = question;
+      sendMessage();
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById("question-input");
+      const sendBtn = document.getElementById("send-btn");
+      const question = input.value.trim();
+
+      if (!question) return;
+
+      // Add to history
+      chatHistory.push({ role: "user", content: question });
+
+      appendMessage("user", question);
+      input.value = "";
+      sendBtn.disabled = true;
+
+      // Show typing animation
+      const typingId = showTyping();
+
+      try {
+        const res = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question })
+        });
+        const data = await res.json();
+        removeMessage(typingId);
+
+        if (res.ok) {
+          chatHistory.push({ role: "assistant", content: data.answer });
+          appendMessage("bot", data.answer);
+        } else {
+          appendMessage("bot", "❌ " + data.detail);
+        }
+      } catch (err) {
+        removeMessage(typingId);
+        appendMessage("bot", "❌ Could not reach the server. Please try again.");
+      }
+
+      sendBtn.disabled = false;
+      input.focus();
+    }
+
+    function showTyping() {
+      const chatBox = document.getElementById("chat-box");
+      const div = document.createElement("div");
+      const id = "typing-" + Date.now();
+      div.id = id;
+      div.className = "typing-indicator";
+      div.innerHTML = "<span></span><span></span><span></span>";
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
+      return id;
+    }
+
+    function appendMessage(type, text) {
+  const chatBox = document.getElementById("chat-box");
+  const msg = document.createElement("div");
+  const id = "msg-" + Date.now();
+  msg.id = id;
+  msg.className = "message " + type;
+
+  // Format bot messages with bullet points and line breaks
+  if (type === "bot") {
+    msg.innerHTML = text
+      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+      .replace(/\*(.*?)\*/g, "<strong>$1</strong>")
+      .replace(/^(\d+\.\s)/gm, "<br>$1")
+      .replace(/^[-•]\s/gm, "<br>• ")
+      .replace(/\n/g, "<br>");
+  } else {
+    msg.textContent = text;
+  }
+
+  chatBox.appendChild(msg);
+  chatBox.scrollTop = chatBox.scrollHeight;
+  return id;
+}
+
+function newChat() {
+  const chatBox = document.getElementById("chat-box");
+  chatBox.innerHTML = `
+    <div class="message bot">
+      👋 Hello! I am <strong>FUDA</strong>. How can I help you today?
+    </div>
+    <div class="suggestions">
+      <button class="suggestion-btn" onclick="askSuggestion(this)">📋 Admission requirements</button>
+      <button class="suggestion-btn" onclick="askSuggestion(this)">📚 Available courses</button>
+      <button class="suggestion-btn" onclick="askSuggestion(this)">📅 Academic calendar</button>
+      <button class="suggestion-btn" onclick="askSuggestion(this)">💰 School fees</button>
+      <button class="suggestion-btn" onclick="askSuggestion(this)">📝 Exam rules</button>
+      <button class="suggestion-btn" onclick="askSuggestion(this)">🏠 Hostel information</button>
+    </div>`;
+  chatHistory = [];
+}
+
+    function removeMessage(id) {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    }
+  </script>
+
+</body>
+</html>
