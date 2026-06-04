@@ -2,12 +2,12 @@ import os
 from dotenv import load_dotenv
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_chroma import Chroma
+from langchain_community.vectorstores import Chroma
 from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
+from langchain_community.embeddings import FakeEmbeddings
 
 load_dotenv()
 
@@ -23,9 +23,7 @@ def load_and_split_pdf(pdf_path: str):
     return splitter.split_documents(documents)
 
 def get_embeddings():
-    return HuggingFaceEmbeddings(
-        model_name="sentence-transformers/paraphrase-MiniLM-L3-v2"
-    )
+    return FakeEmbeddings(size=384)
 
 def build_vectorstore(chunks):
     vectorstore = Chroma.from_documents(
@@ -49,23 +47,23 @@ def build_rag_chain(vectorstore):
     )
 
     prompt = PromptTemplate.from_template("""
-You are FUDA, a friendly virtual assistant for Federal University Dutse (FUD), Nigeria.
-Use the context below to answer the student's question.
+    You are FUDA, a friendly virtual assistant for Federal University Dutse (FUD), Nigeria.
+    Use the context below to answer the student's question.
 
-FORMATTING RULES:
-- For lists (courses, requirements, rules etc.) always use numbered lists or bullet points
-- Keep answers concise and well structured
-- Use short paragraphs, not long blocks of text
-- Bold important words using *word*
+    FORMATTING RULES:
+    - For lists (courses, requirements, rules etc.) always use numbered lists or bullet points
+    - Keep answers concise and well structured
+    - Use short paragraphs, not long blocks of text
 
-Context:
-{context}
+    Context:
+    {context}
 
-Student's Question:
-{question}
+    Student's Question:
+    {question}
 
-Your Answer:
-""")
+    Your Answer:
+    """)
+
     retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
 
     chain = (
