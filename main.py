@@ -14,6 +14,8 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 UPLOAD_DIR = "./uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+os.makedirs(CHROMA_DIR, exist_ok=True)
 CHROMA_DIR = "./chroma_db"
 
 # Store the chain in memory
