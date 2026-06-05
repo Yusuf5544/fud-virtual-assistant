@@ -1,6 +1,5 @@
 venv/
 chroma_db/
-uploads/
 .env
 __pycache__/
 *.pyc
