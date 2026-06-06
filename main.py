@@ -54,5 +54,5 @@ async def chat(request: QuestionRequest):
         raise HTTPException(status_code=400, detail="No document loaded yet.")
     if not request.question.strip():
         raise HTTPException(status_code=400, detail="Question cannot be empty.")
-    answer = rag_chain.invoke(request.question)
+    answer = rag_chain(request.question)
     return {"answer": answer}
