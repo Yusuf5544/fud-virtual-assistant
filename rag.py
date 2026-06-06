@@ -22,13 +22,10 @@ def load_and_split_pdf(pdf_path: str):
     )
     return splitter.split_documents(documents)
 
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.embeddings import FakeEmbeddings
 
 def get_embeddings():
-    return HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2",
-        model_kwargs={"device": "cpu"},
-        encode_kwargs={"normalize_embeddings": True}
+    return FakeEmbeddings(size=384)
     )
 
 def build_vectorstore(chunks):
@@ -53,20 +50,23 @@ def build_rag_chain(vectorstore):
     )
 
     prompt = PromptTemplate.from_template("""
-You are FUDA, a friendly virtual assistant for Federal University Dutse (FUD), Nigeria.
-Use the context below to answer the student's question as helpfully as possible.
-If the context contains relevant information, use it to answer clearly.
-If the context doesn't have enough detail, use your general knowledge about FUD and Nigerian universities to give a helpful answer.
-Always be friendly and encourage students.
-Include the FUD website https://fud.edu.ng only when truly necessary.
+You are FUDA, a knowledgeable virtual assistant for Federal University Dutse (FUD), Nigeria.
+Use the context below AND your knowledge about FUD to answer clearly.
+
+RULES:
+- Give direct, confident answers
+- Use numbered lists for multiple items
+- Keep answers short and clear
+- Never say "the context doesn't mention" — just answer directly
+- You know FUD offers: Software Engineering, Computer Science, Medicine, Law, Agriculture, Education, Management Sciences and more
 
 Context:
 {context}
 
-Student's Question:
+Question:
 {question}
 
-Your Answer:
+Answer:
 """)
 
     retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
