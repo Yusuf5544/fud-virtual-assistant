@@ -379,17 +379,19 @@
 function newChat() {
   const chatBox = document.getElementById("chat-box");
   chatBox.innerHTML = `
-    <div class="message bot">
-      👋 Hello! I am <strong>FUDA</strong>. How can I help you today?
-    </div>
-    <div class="suggestions">
+    </div> <!-- end of chat-box -->
+
+    <!-- Suggested questions -->
+    <div class="suggestions" style="padding: 4px 0;">
       <button class="suggestion-btn" onclick="askSuggestion(this)">📋 Admission requirements</button>
       <button class="suggestion-btn" onclick="askSuggestion(this)">📚 Available courses</button>
       <button class="suggestion-btn" onclick="askSuggestion(this)">📅 Academic calendar</button>
       <button class="suggestion-btn" onclick="askSuggestion(this)">💰 School fees</button>
       <button class="suggestion-btn" onclick="askSuggestion(this)">📝 Exam rules</button>
       <button class="suggestion-btn" onclick="askSuggestion(this)">🏠 Hostel information</button>
-    </div>`;
+    </div>
+
+    <div class="input-area"> <!-- input area starts here -->`;
   chatHistory = [];
 }
 
