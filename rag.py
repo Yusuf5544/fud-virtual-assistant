@@ -15,7 +15,7 @@ CHROMA_DIR = "./chroma_db"
 
 def load_and_split_pdf(pdf_path: str):
     loader = PyPDFLoader(pdf_path)
-    documents = loader.load()
+    documents = loader.load()  
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=500,
         chunk_overlap=50
@@ -23,7 +23,7 @@ def load_and_split_pdf(pdf_path: str):
     return splitter.split_documents(documents)
 
 def get_embeddings():
-    return FakeEmbeddings(size=384)
+    return FakeEmbeddings(size=384) 
 
 def build_vectorstore(chunks):
     vectorstore = Chroma.from_documents(
@@ -47,17 +47,12 @@ def build_rag_chain(vectorstore):
     )
 
     prompt = PromptTemplate.from_template("""
-You are FUDA, a helpful virtual assistant for Federal University Dutse (FUD), Nigeria.
-Answer the student's question using ONLY the information in the context below.
-
-STRICT RULES:
-1. Only use information from the context. Do not guess or add anything outside it.
-2. If the answer is not in the context, respond exactly with:
-   "I'm sorry, I don't have that information. Please contact FUD directly or visit the official website: https://fud.edu.ng"
-3. Never use *, -, bullet points, or unnecessary symbols in your response.
-4. Write in clear and plain sentences only.
-5. If you need to refer the student to the school website, always include the link: https://fud.edu.ng
-6. Be friendly, simple, and direct.
+You are FUDA, a friendly virtual assistant for Federal University Dutse (FUD), Nigeria.
+Use the context below to answer the student's question as helpfully as possible.
+If the context contains relevant information, use it to answer clearly.
+If the context doesn't have enough detail, use your general knowledge about FUD and Nigerian universities to give a helpful answer.
+Always be friendly and encourage students.
+Include the FUD website https://fud.edu.ng only when truly necessary.
 
 Context:
 {context}
