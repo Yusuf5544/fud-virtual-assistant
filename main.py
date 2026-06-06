@@ -23,18 +23,10 @@ rag_chain = None
 @app.on_event("startup")
 async def startup_event():
     global rag_chain
-    if os.path.exists(CHROMA_DIR) and os.listdir(CHROMA_DIR):
-        print("Loading existing vectorstore...")
-        rag_chain = load_chain()
-        print("Chain loaded successfully.")
-    else:
-        for filename in os.listdir(UPLOAD_DIR):
-            if filename.endswith(".pdf") or filename.endswith(".docx"):
-                pdf_path = os.path.join(UPLOAD_DIR, filename)
-                print(f"Auto-loading {filename}...")
-                rag_chain = process_pdf_and_build_chain(pdf_path)
-                print("Done!")
-                break
+    print("Loading document...")
+    rag_chain = load_chain()
+    if rag_chain:
+        print("Done!")
 
 @app.get("/")
 async def root():
