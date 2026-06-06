@@ -1,37 +1,37 @@
 import os
+import json
 from dotenv import load_dotenv
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough
-from langchain_community.vectorstores import SKLearnVectorStore
-from langchain_community.embeddings import FakeEmbeddings
 
 load_dotenv()
 
-UPLOAD_DIR = "./uploads"
-vectorstore = None
+KNOWLEDGE_BASE = "./knowledge_base.json"
+chunks = []
 
-def load_and_split_pdf(pdf_path: str):
-    loader = PyPDFLoader(pdf_path)
-    documents = loader.load()
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size=500,
-        chunk_overlap=50
-    )
-    return splitter.split_documents(documents)
+def load_knowledge_base():
+    global chunks
+    if os.path.exists(KNOWLEDGE_BASE):
+        with open(KNOWLEDGE_BASE, "r", encoding="utf-8") as f:
+            chunks = json.load(f)
+        print(f"Loaded {len(chunks)} chunks from knowledge base.")
 
-def get_embeddings():
-    return FakeEmbeddings(size=384)
+def search_chunks(query: str, k: int = 6):
+    query_lower = query.lower()
+    keywords = query_lower.split()
+    
+    scored = []
+    for chunk in chunks:
+        content_lower = chunk["content"].lower()
+        score = sum(1 for kw in keywords if kw in content_lower)
+        if score > 0:
+            scored.append((score, chunk["content"]))
+    
+    scored.sort(reverse=True, key=lambda x: x[0])
+    return "\n\n".join([c for _, c in scored[:k]])
 
-def build_rag_chain(docs):
-    global vectorstore
-    embeddings = get_embeddings()
-    vectorstore = SKLearnVectorStore.from_documents(docs, embeddings)
-    retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
-
+def build_rag_chain():
     llm = ChatGroq(
         api_key=os.getenv("GROQ_API_KEY"),
         model_name="llama-3.3-70b-versatile",
@@ -40,14 +40,14 @@ def build_rag_chain(docs):
 
     prompt = PromptTemplate.from_template("""
 You are FUDA, a knowledgeable virtual assistant for Federal University Dutse (FUD), Nigeria.
-Use the context below AND your knowledge about FUD to answer clearly.
+Use ONLY the context below to answer. The context comes directly from the FUD Student Handbook.
 
 RULES:
-- Give direct confident answers
+- Answer directly and confidently from the context
 - Use numbered lists for multiple items
-- Keep answers short and clear
-- You know FUD offers: Software Engineering, Computer Science, Medicine, Law, Agriculture, Education, Management Sciences and more
-- - When mentioning the FUD website always write it as: https://fud.edu.ng
+- Keep answers concise and clear
+- Only mention https://fud.edu.ng if the context doesn't have enough detail
+- Never say "the context doesn't mention" — just answer from what you know
 
 Context:
 {context}
@@ -58,20 +58,17 @@ Question:
 Answer:
 """)
 
-    chain = (
-        {"context": retriever, "question": RunnablePassthrough()}
-        | prompt
-        | llm
-        | StrOutputParser()
-    )
-    return chain
+    def rag_invoke(question: str) -> str:
+        context = search_chunks(question)
+        chain = prompt | llm | StrOutputParser()
+        return chain.invoke({"context": context, "question": question})
+
+    return rag_invoke
 
 def process_pdf_and_build_chain(pdf_path: str):
-    docs = load_and_split_pdf(pdf_path)
-    return build_rag_chain(docs)
+    load_knowledge_base()
+    return build_rag_chain()
 
 def load_chain():
-    for filename in os.listdir(UPLOAD_DIR):
-        if filename.endswith(".pdf") or filename.endswith(".docx"):
-            return process_pdf_and_build_chain(os.path.join(UPLOAD_DIR, filename))
-    return None
+    load_knowledge_base()
+    return build_rag_chain()
