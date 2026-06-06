@@ -47,6 +47,7 @@ RULES:
 - Use numbered lists for multiple items
 - Keep answers short and clear
 - You know FUD offers: Software Engineering, Computer Science, Medicine, Law, Agriculture, Education, Management Sciences and more
+- - When mentioning the FUD website always write it as: https://fud.edu.ng
 
 Context:
 {context}

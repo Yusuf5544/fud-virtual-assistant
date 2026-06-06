@@ -73,7 +73,20 @@
       white-space: nowrap;
     }
 
-    #dark-toggle:hover { background: rgba(255,255,255,0.3); }
+    #new-chat-btn {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+
+    #dark-toggle:hover, #new-chat-btn:hover {
+      background: rgba(255,255,255,0.3);
+    }
 
     .container {
       width: 100%;
@@ -82,7 +95,7 @@
       flex-direction: column;
       height: calc(100vh - 60px);
       padding: 12px;
-      gap: 10px;
+      gap: 8px;
     }
 
     #chat-box {
@@ -122,7 +135,6 @@
       transition: background 0.3s, color 0.3s;
     }
 
-    /* Typing animation */
     .typing-indicator {
       display: flex;
       align-items: center;
@@ -151,7 +163,6 @@
       30% { transform: translateY(-8px); }
     }
 
-    /* Suggested questions */
     .suggestions {
       display: flex;
       flex-wrap: wrap;
@@ -169,18 +180,6 @@
       font-size: 0.82rem;
       transition: all 0.2s;
     }
-
-    #new-chat-btn {
-  background: rgba(255,255,255,0.2);
-  border: none;
-  color: white;
-  padding: 6px 12px;
-  border-radius: 20px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  white-space: nowrap;
-}
-#new-chat-btn:hover { background: rgba(255,255,255,0.3); }
 
     .suggestion-btn:hover {
       background: #006400;
@@ -216,13 +215,16 @@
       border-radius: 8px;
       cursor: pointer;
       font-size: 0.9rem;
-      transition: background 0.2s;
     }
 
     #send-btn:hover { background: #005000; }
     #send-btn:disabled { background: #aaa; cursor: not-allowed; }
 
-    /* Mobile */
+    .message.bot a {
+      color: #4CAF50;
+      text-decoration: underline;
+    }
+
     @media (max-width: 600px) {
       header h1 { font-size: 1rem; }
       .message { max-width: 90%; font-size: 0.88rem; }
@@ -242,23 +244,24 @@
       <button id="new-chat-btn" onclick="newChat()">🔄 New Chat</button>
       <button id="dark-toggle" onclick="toggleDark()">🌙 Dark Mode</button>
     </div>
-</header>
+  </header>
 
   <div class="container">
+
     <div id="chat-box">
       <div class="message bot">
         👋 Hello! I am <strong>FUDA</strong>, the FUD Virtual Assistant. Ask me anything about Federal University Dutse — admissions, courses, regulations, and more!
       </div>
+    </div>
 
-      <!-- Suggested questions -->
-      <div class="suggestions">
-        <button class="suggestion-btn" onclick="askSuggestion(this)">📋 Admission requirements</button>
-        <button class="suggestion-btn" onclick="askSuggestion(this)">📚 Available courses</button>
-        <button class="suggestion-btn" onclick="askSuggestion(this)">📅 Academic calendar</button>
-        <button class="suggestion-btn" onclick="askSuggestion(this)">💰 School fees</button>
-        <button class="suggestion-btn" onclick="askSuggestion(this)">📝 Exam rules</button>
-        <button class="suggestion-btn" onclick="askSuggestion(this)">🏠 Hostel information</button>
-      </div>
+    <!-- Suggestion buttons always visible at bottom -->
+    <div class="suggestions">
+      <button class="suggestion-btn" onclick="askSuggestion(this)">📋 Admission requirements</button>
+      <button class="suggestion-btn" onclick="askSuggestion(this)">📚 Available courses</button>
+      <button class="suggestion-btn" onclick="askSuggestion(this)">📅 Academic calendar</button>
+      <button class="suggestion-btn" onclick="askSuggestion(this)">💰 School fees</button>
+      <button class="suggestion-btn" onclick="askSuggestion(this)">📝 Exam rules</button>
+      <button class="suggestion-btn" onclick="askSuggestion(this)">🏠 Hostel information</button>
     </div>
 
     <div class="input-area">
@@ -270,13 +273,12 @@
       />
       <button id="send-btn" onclick="sendMessage()">Send ➤</button>
     </div>
+
   </div>
 
   <script>
-    // Chat history
     let chatHistory = [];
 
-    // Dark mode
     function toggleDark() {
       document.body.classList.toggle("dark");
       const btn = document.getElementById("dark-toggle");
@@ -286,17 +288,24 @@
       localStorage.setItem("darkMode", document.body.classList.contains("dark"));
     }
 
-    // Load dark mode preference
     if (localStorage.getItem("darkMode") === "true") {
       document.body.classList.add("dark");
       document.getElementById("dark-toggle").textContent = "☀️ Light Mode";
     }
 
-    // Suggested question click
     function askSuggestion(btn) {
       const question = btn.textContent.replace(/^[^\w]+/, "").trim();
       document.getElementById("question-input").value = question;
       sendMessage();
+    }
+
+    function newChat() {
+      const chatBox = document.getElementById("chat-box");
+      chatBox.innerHTML = `
+        <div class="message bot">
+          👋 Hello! I am <strong>FUDA</strong>. How can I help you today?
+        </div>`;
+      chatHistory = [];
     }
 
     async function sendMessage() {
@@ -306,14 +315,11 @@
 
       if (!question) return;
 
-      // Add to history
       chatHistory.push({ role: "user", content: question });
-
       appendMessage("user", question);
       input.value = "";
       sendBtn.disabled = true;
 
-      // Show typing animation
       const typingId = showTyping();
 
       try {
@@ -353,47 +359,31 @@
     }
 
     function appendMessage(type, text) {
-  const chatBox = document.getElementById("chat-box");
-  const msg = document.createElement("div");
-  const id = "msg-" + Date.now();
-  msg.id = id;
-  msg.className = "message " + type;
+      const chatBox = document.getElementById("chat-box");
+      const msg = document.createElement("div");
+      const id = "msg-" + Date.now();
+      msg.id = id;
+      msg.className = "message " + type;
 
-  // Format bot messages with bullet points and line breaks
-  if (type === "bot") {
-    msg.innerHTML = text
-      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-      .replace(/\*(.*?)\*/g, "<strong>$1</strong>")
-      .replace(/^(\d+\.\s)/gm, "<br>$1")
-      .replace(/^[-•]\s/gm, "<br>• ")
-      .replace(/\n/g, "<br>");
-  } else {
-    msg.textContent = text;
-  }
+      if (type === "bot") {
+        const withLinks = text.replace(
+          /(https?:\/\/[^\s]+)/g,
+          '<a href="$1" target="_blank">$1</a>'
+        );
+        msg.innerHTML = withLinks
+          .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+          .replace(/\*(.*?)\*/g, "<strong>$1</strong>")
+          .replace(/^(\d+\.\s)/gm, "<br>$1")
+          .replace(/^[-•]\s/gm, "<br>• ")
+          .replace(/\n/g, "<br>");
+      } else {
+        msg.textContent = text;
+      }
 
-  chatBox.appendChild(msg);
-  chatBox.scrollTop = chatBox.scrollHeight;
-  return id;
-}
-
-function newChat() {
-  const chatBox = document.getElementById("chat-box");
-  chatBox.innerHTML = `
-    </div> <!-- end of chat-box -->
-
-    <!-- Suggested questions -->
-    <div class="suggestions" style="padding: 4px 0;">
-      <button class="suggestion-btn" onclick="askSuggestion(this)">📋 Admission requirements</button>
-      <button class="suggestion-btn" onclick="askSuggestion(this)">📚 Available courses</button>
-      <button class="suggestion-btn" onclick="askSuggestion(this)">📅 Academic calendar</button>
-      <button class="suggestion-btn" onclick="askSuggestion(this)">💰 School fees</button>
-      <button class="suggestion-btn" onclick="askSuggestion(this)">📝 Exam rules</button>
-      <button class="suggestion-btn" onclick="askSuggestion(this)">🏠 Hostel information</button>
-    </div>
-
-    <div class="input-area"> <!-- input area starts here -->`;
-  chatHistory = [];
-}
+      chatBox.appendChild(msg);
+      chatBox.scrollTop = chatBox.scrollHeight;
+      return id;
+    }
 
     function removeMessage(id) {
       const el = document.getElementById(id);
