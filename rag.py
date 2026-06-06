@@ -22,8 +22,14 @@ def load_and_split_pdf(pdf_path: str):
     )
     return splitter.split_documents(documents)
 
+from langchain_community.embeddings import HuggingFaceEmbeddings
+
 def get_embeddings():
-    return FakeEmbeddings(size=384) 
+    return HuggingFaceEmbeddings(
+        model_name="sentence-transformers/all-MiniLM-L6-v2",
+        model_kwargs={"device": "cpu"},
+        encode_kwargs={"normalize_embeddings": True}
+    )
 
 def build_vectorstore(chunks):
     vectorstore = Chroma.from_documents(
