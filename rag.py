@@ -18,6 +18,10 @@ def load_knowledge_base():
         print(f"Loaded {len(chunks)} chunks from knowledge base.")
 
 def search_chunks(query: str, k: int = 6):
+    personal_questions = ["my name", "who am i", "what is my name", "what's my name"]
+    if any(q in query.lower() for q in personal_questions):
+        return "This is a personal question about the user."
+
     query_lower = query.lower()
     keywords = query_lower.split()
     scored = []
@@ -48,7 +52,9 @@ def build_rag_chain():
         "5. Only mention https://fud.edu.ng when the user needs to act online\n"
         "6. For fees always mention: https://myportal.fud.edu.ng\n"
         "7. For admission always mention: https://putme.fud.edu.ng\n"
-        "8. Be warm and encouraging to students\n\n"
+        "8. Be warm and encouraging to students\n"
+        "9. If asked personal questions like 'what is my name' say: I am FUDA, a virtual assistant. I don't have access to personal student information. Please visit https://myportal.fud.edu.ng for your personal details.\n"
+        "10. When asked about available courses list ALL of these: Software Engineering, Computer Science, Cyber Security, Information Technology, Medicine (MBBS), Human Anatomy, Human Physiology, Nursing Sciences, Environmental Health, Public Health, Law, Agricultural Economics, Animal Science, Crop Science, Fisheries and Aquaculture, Forestry and Wildlife, Soil Science, Economics, English Language, Arabic, Political Science, Criminology and Security Studies, Accounting, Actuarial Science, Banking and Finance, Business Administration, Taxation, Physics, Chemistry, Mathematics, Environmental Management, Biology, Zoology, Botany, Biochemistry, Microbiology and Biotechnology, Education programmes\n\n"
         "THINGS YOU KNOW ABOUT FUD:\n"
         "- Founded 10th March 2011 in Dutse, Jigawa State\n"
         "- Motto: Knowledge, Excellence, and Service\n"
